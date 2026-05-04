@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { TopBar, LogoutBtn } from "../../components/ui/TopBar";
 import BottomNav from "../../components/ui/BottomNav";
-import Card from "../../components/ui/Card";
 import StatusBadge from "../../components/ui/StatusBadge";
-import { PrimaryBtn, DangerBtn, Btn } from "../../components/ui/Buttons";
-import { DRIVER_STATUS_NEXT } from "../../constants";
-import { fmtTime, estDist } from "../../utils/helpers";
+import Card from "../../components/ui/Card";
+import { PrimaryBtn, DangerBtn, Btn } from "../../components/ui/Button";
+import { fmtTime, estDist } from "../../store/helpers";
 
 const TABS = [
   { id: "home",      icon: "🏠", label: "Нүүр"      },
@@ -21,13 +20,21 @@ const TAB_TITLES = {
   history: "Түүх", profile: "Профайл",
 };
 
+const STATUS_NEXT = {
+  accepted:   { next: "picked_up",  label: "📦 Авсан гэж тэмдэглэх"    },
+  picked_up:  { next: "on_the_way", label: "🚀 Замдаа гэж тэмдэглэх"   },
+  on_the_way: { next: "delivered",  label: "✅ Хүргэсэн гэж тэмдэглэх" },
+};
+
 export default function DriverApp({ state, dispatch, user, onLogout }) {
-  const [tab,        setTab]        = useState("home");
-  const [sel,        setSel]        = useState(null);
+  const [tab, setTab]   = useState("home");
+  const [sel, setSel]   = useState(null);
   const [cancelNote, setCancelNote] = useState("");
   const [showCancel, setShowCancel] = useState(false);
 
-  const drv      = state.drivers.find(d => d.user_id === user.id);
+  const drv     = state.drivers.find(d => d.user_id === user.id);
+  const getUser = id => state.users.find(u => u.id === id);
+
   const available = state.deliveries.filter(d => d.status === "pending" && drv?.is_online && drv?.is_available);
   const myActive  = state.deliveries.find(d => d.assigned_driver_id === drv?.id && ["accepted","picked_up","on_the_way"].includes(d.status));
   const myHistory = state.deliveries.filter(d => d.assigned_driver_id === drv?.id && ["delivered","cancelled"].includes(d.status));
@@ -40,7 +47,7 @@ export default function DriverApp({ state, dispatch, user, onLogout }) {
         right={<LogoutBtn onLogout={onLogout} />}
       />
 
-      {/* ── HOME ── */}
+      {/* HOME */}
       {tab === "home" && (
         <div style={{ padding: 16, paddingBottom: 80 }}>
           <div style={{ background: "linear-gradient(135deg,#1a1a2e,#0f3460)", borderRadius: 20, padding: 20, color: "#fff", marginBottom: 16 }}>
@@ -74,27 +81,17 @@ export default function DriverApp({ state, dispatch, user, onLogout }) {
               <div style={{ fontSize: 14 }}>{myActive.tracking_code}</div>
               <div style={{ fontSize: 13, color: "#666" }}>📍 {myActive.pickup_address}</div>
               <div style={{ fontSize: 13, color: "#666" }}>🎯 {myActive.dropoff_address}</div>
-              <PrimaryBtn full style={{ marginTop: 10 }} onClick={() => setTab("active")}>
-                Дэлгэрэнгүй харах
-              </PrimaryBtn>
+              <PrimaryBtn full style={{ marginTop: 10 }} onClick={() => setTab("active")}>Дэлгэрэнгүй харах</PrimaryBtn>
             </Card>
           )}
         </div>
       )}
 
-      {/* ── AVAILABLE ── */}
+      {/* AVAILABLE */}
       {tab === "available" && (
         <div style={{ padding: 16, paddingBottom: 80 }}>
-          {!drv?.is_online && (
-            <div style={{ background: "#fef3c7", borderRadius: 12, padding: 14, marginBottom: 16, fontSize: 14, color: "#92400e" }}>
-              ⚠️ Онлайн болно уу
-            </div>
-          )}
-          {myActive && (
-            <div style={{ background: "#fee2e2", borderRadius: 12, padding: 14, marginBottom: 16, fontSize: 14, color: "#991b1b" }}>
-              ❌ Одоо нэг захиалга хийж байна
-            </div>
-          )}
+          {!drv?.is_online && <div style={{ background: "#fef3c7", borderRadius: 12, padding: 14, marginBottom: 16, fontSize: 14, color: "#92400e" }}>⚠️ Онлайн болно уу</div>}
+          {myActive && <div style={{ background: "#fee2e2", borderRadius: 12, padding: 14, marginBottom: 16, fontSize: 14, color: "#991b1b" }}>❌ Одоо нэг захиалга хийж байна</div>}
           {available.length === 0 && !myActive && drv?.is_online && (
             <div style={{ textAlign: "center", padding: 40, color: "#999" }}>
               <div style={{ fontSize: 48 }}>📭</div>
@@ -105,17 +102,13 @@ export default function DriverApp({ state, dispatch, user, onLogout }) {
             <Card key={d.id} onClick={() => { setSel(d); setTab("preview"); }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <div style={{ fontWeight: 700 }}>{d.item_description}</div>
-                <span style={{ fontSize: 12, background: "#f0fdf4", color: "#16a34a", padding: "3px 10px", borderRadius: 20, fontWeight: 600 }}>
-                  {estDist(d)}
-                </span>
+                <span style={{ fontSize: 12, background: "#f0fdf4", color: "#16a34a", padding: "3px 10px", borderRadius: 20, fontWeight: 600 }}>{estDist(d)}</span>
               </div>
               <div style={{ fontSize: 13, color: "#555", marginBottom: 3 }}>📍 {d.pickup_address}</div>
               <div style={{ fontSize: 13, color: "#555", marginBottom: 8 }}>🎯 {d.dropoff_address}</div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 12, background: "#f5f5f5", padding: "4px 10px", borderRadius: 20, color: "#555" }}>📦 {d.item_size}</span>
-                {d.preferred_pickup_time && (
-                  <span style={{ fontSize: 12, background: "#f5f5f5", padding: "4px 10px", borderRadius: 20, color: "#555" }}>⏰ {d.preferred_pickup_time}</span>
-                )}
+                {d.preferred_pickup_time && <span style={{ fontSize: 12, background: "#f5f5f5", padding: "4px 10px", borderRadius: 20, color: "#555" }}>⏰ {d.preferred_pickup_time}</span>}
               </div>
               {d.note && <div style={{ fontSize: 12, color: "#888", marginTop: 6 }}>📝 {d.note}</div>}
             </Card>
@@ -123,7 +116,7 @@ export default function DriverApp({ state, dispatch, user, onLogout }) {
         </div>
       )}
 
-      {/* ── PREVIEW (limited info before accepting) ── */}
+      {/* PREVIEW (limited info before accepting) */}
       {tab === "preview" && sel && (
         <div style={{ padding: 16, paddingBottom: 100 }}>
           <div style={{ background: "linear-gradient(135deg,#1a1a2e,#0f3460)", borderRadius: 16, padding: 20, color: "#fff", marginBottom: 16 }}>
@@ -131,37 +124,22 @@ export default function DriverApp({ state, dispatch, user, onLogout }) {
             <div style={{ fontSize: 20, fontWeight: 800 }}>{sel.item_description}</div>
             <div style={{ fontSize: 14, opacity: 0.8, marginTop: 4 }}>{estDist(sel)} · {sel.item_size}</div>
           </div>
-          <Card>
-            <div style={{ fontWeight: 600, marginBottom: 6 }}>Авах газар</div>
-            <div style={{ fontSize: 14, color: "#444" }}>📍 {sel.pickup_address}</div>
-          </Card>
-          <Card>
-            <div style={{ fontWeight: 600, marginBottom: 6 }}>Хүргэх газар</div>
-            <div style={{ fontSize: 14, color: "#444" }}>🎯 {sel.dropoff_address}</div>
-          </Card>
-          {sel.note && (
-            <Card>
-              <div style={{ fontWeight: 600, marginBottom: 4 }}>Тэмдэглэл</div>
-              <div style={{ fontSize: 14, color: "#444" }}>{sel.note}</div>
-            </Card>
-          )}
+          <Card><div style={{ fontWeight: 600, marginBottom: 6 }}>Авах газар</div><div style={{ fontSize: 14, color: "#444" }}>📍 {sel.pickup_address}</div></Card>
+          <Card><div style={{ fontWeight: 600, marginBottom: 6 }}>Хүргэх газар</div><div style={{ fontSize: 14, color: "#444" }}>🎯 {sel.dropoff_address}</div></Card>
+          {sel.note && <Card><div style={{ fontWeight: 600, marginBottom: 4 }}>Тэмдэглэл</div><div style={{ fontSize: 14, color: "#444" }}>{sel.note}</div></Card>}
           <div style={{ background: "#fef3c7", borderRadius: 12, padding: 12, marginBottom: 16, fontSize: 13, color: "#92400e" }}>
             ℹ️ Хүлээн авсны дараа харилцагчийн дэлгэрэнгүй мэдээлэл харагдана
           </div>
-          <PrimaryBtn
-            full
-            disabled={!!myActive}
-            onClick={() => {
-              dispatch({ type: "ACCEPT_DELIVERY", deliveryId: sel.id, driverId: drv.id });
-              setTab("active");
-            }}
-          >
+          <PrimaryBtn full disabled={!!myActive} onClick={() => {
+            dispatch({ type: "ACCEPT_DELIVERY", deliveryId: sel.id, driverId: drv.id });
+            setTab("active");
+          }}>
             {myActive ? "Одоо захиалга хийж байна" : "✓ Захиалга хүлээн авах"}
           </PrimaryBtn>
         </div>
       )}
 
-      {/* ── ACTIVE ── */}
+      {/* ACTIVE DELIVERY */}
       {tab === "active" && (
         <div style={{ padding: 16, paddingBottom: 100 }}>
           {!myActive ? (
@@ -180,30 +158,23 @@ export default function DriverApp({ state, dispatch, user, onLogout }) {
                 <div style={{ fontSize: 14 }}>👤 {myActive.sender_name}</div>
                 <div style={{ fontSize: 14 }}>📞 <a href={`tel:${myActive.sender_phone}`} style={{ color: "#2563eb" }}>{myActive.sender_phone}</a></div>
                 <div style={{ fontSize: 13, color: "#555" }}>📍 {myActive.pickup_address}</div>
-                <a href={`https://maps.google.com/?q=${myActive.pickup_lat},${myActive.pickup_lng}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 8, fontSize: 13, color: "#2563eb" }}>
-                  🗺️ Google Maps
-                </a>
+                <a href={`https://maps.google.com/?q=${myActive.pickup_lat},${myActive.pickup_lng}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 8, fontSize: 13, color: "#2563eb" }}>🗺️ Google Maps</a>
               </Card>
               <Card>
                 <div style={{ fontWeight: 600, marginBottom: 8 }}>Хүлээн авагч</div>
                 <div style={{ fontSize: 14 }}>👤 {myActive.receiver_name}</div>
                 <div style={{ fontSize: 14 }}>📞 <a href={`tel:${myActive.receiver_phone}`} style={{ color: "#2563eb" }}>{myActive.receiver_phone}</a></div>
                 <div style={{ fontSize: 13, color: "#555" }}>🎯 {myActive.dropoff_address}</div>
-                <a href={`https://maps.google.com/?q=${myActive.dropoff_lat},${myActive.dropoff_lng}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 8, fontSize: 13, color: "#2563eb" }}>
-                  🗺️ Google Maps
-                </a>
+                <a href={`https://maps.google.com/?q=${myActive.dropoff_lat},${myActive.dropoff_lng}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 8, fontSize: 13, color: "#2563eb" }}>🗺️ Google Maps</a>
               </Card>
               <Card>
                 <div style={{ fontSize: 14 }}>📦 {myActive.item_description} · {myActive.item_size}</div>
                 {myActive.note && <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>📝 {myActive.note}</div>}
               </Card>
-              {DRIVER_STATUS_NEXT[myActive.status] && (
-                <PrimaryBtn
-                  full
-                  style={{ marginBottom: 10 }}
-                  onClick={() => dispatch({ type: "UPDATE_STATUS", deliveryId: myActive.id, newStatus: DRIVER_STATUS_NEXT[myActive.status].next, driverId: drv.id })}
-                >
-                  {DRIVER_STATUS_NEXT[myActive.status].label}
+              {STATUS_NEXT[myActive.status] && (
+                <PrimaryBtn full style={{ marginBottom: 10 }}
+                  onClick={() => dispatch({ type: "UPDATE_STATUS", deliveryId: myActive.id, newStatus: STATUS_NEXT[myActive.status].next, driverId: drv.id })}>
+                  {STATUS_NEXT[myActive.status].label}
                 </PrimaryBtn>
               )}
               <DangerBtn full onClick={() => setShowCancel(true)}>✕ Цуцлах</DangerBtn>
@@ -234,7 +205,7 @@ export default function DriverApp({ state, dispatch, user, onLogout }) {
         </div>
       )}
 
-      {/* ── HISTORY ── */}
+      {/* HISTORY */}
       {tab === "history" && (
         <div style={{ padding: 16, paddingBottom: 80 }}>
           {myHistory.length === 0 && <div style={{ textAlign: "center", padding: 32, color: "#999" }}>Түүх байхгүй</div>}
@@ -252,23 +223,17 @@ export default function DriverApp({ state, dispatch, user, onLogout }) {
         </div>
       )}
 
-      {/* ── PROFILE ── */}
+      {/* PROFILE */}
       {tab === "profile" && (
         <div style={{ padding: 16, paddingBottom: 80 }}>
           <div style={{ background: "linear-gradient(135deg,#1a1a2e,#0f3460)", borderRadius: 20, padding: 24, color: "#fff", textAlign: "center", marginBottom: 16 }}>
-            <div style={{ width: 72, height: 72, borderRadius: 36, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 32, fontWeight: 700 }}>
-              {user.full_name[0]}
-            </div>
+            <div style={{ width: 72, height: 72, borderRadius: 36, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 32, fontWeight: 700 }}>{user.full_name[0]}</div>
             <div style={{ fontSize: 20, fontWeight: 700 }}>{user.full_name}</div>
             <div style={{ fontSize: 14, opacity: 0.7 }}>{user.phone}</div>
           </div>
           <Card>
             <div style={{ fontWeight: 600, marginBottom: 10 }}>Тээврийн мэдээлэл</div>
-            {[
-              ["Тээврийн хэрэгсэл", drv?.vehicle_type],
-              ["Улсын дугаар",      drv?.vehicle_plate],
-              ["Жолооны үнэмлэх",  drv?.license_number],
-            ].map(([k, v]) => (
+            {[["Тээврийн хэрэгсэл", drv?.vehicle_type], ["Улсын дугаар", drv?.vehicle_plate], ["Жолооны үнэмлэх", drv?.license_number]].map(([k, v]) => (
               <div key={k} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <div style={{ fontSize: 13, color: "#666" }}>{k}</div>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{v}</div>

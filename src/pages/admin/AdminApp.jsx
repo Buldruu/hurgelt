@@ -1,20 +1,20 @@
 import { useState } from "react";
 import { TopBar, LogoutBtn } from "../../components/ui/TopBar";
 import BottomNav from "../../components/ui/BottomNav";
-import Card from "../../components/ui/Card";
 import StatusBadge from "../../components/ui/StatusBadge";
-import { PrimaryBtn, Btn } from "../../components/ui/Buttons";
+import Card from "../../components/ui/Card";
+import { PrimaryBtn, Btn } from "../../components/ui/Button";
 import { Input, Select } from "../../components/ui/FormFields";
-import DeliveryForm from "../../components/DeliveryForm";
+import DeliveryForm from "../../components/shared/DeliveryForm";
 import { STATUS_CONFIG, VEHICLE_TYPES } from "../../constants";
-import { fmtTime, genTracking } from "../../utils/helpers";
+import { fmtTime } from "../../store/helpers";
 
 const TABS = [
-  { id: "dashboard",  icon: "📊", label: "Хяналт"    },
-  { id: "deliveries", icon: "📦", label: "Захиалга"   },
-  { id: "create",     icon: "➕", label: "Үүсгэх"     },
-  { id: "drivers",    icon: "🚗", label: "Жолооч"     },
-  { id: "customers",  icon: "👥", label: "Хэрэглэгч"  },
+  { id: "dashboard",  icon: "📊", label: "Хяналт"   },
+  { id: "deliveries", icon: "📦", label: "Захиалга"  },
+  { id: "create",     icon: "➕", label: "Үүсгэх"    },
+  { id: "drivers",    icon: "🚗", label: "Жолооч"    },
+  { id: "customers",  icon: "👥", label: "Хэрэглэгч" },
 ];
 
 const TAB_TITLES = {
@@ -27,11 +27,11 @@ const TAB_TITLES = {
 };
 
 export default function AdminApp({ state, dispatch, user, onLogout }) {
-  const [tab,      setTab]      = useState("dashboard");
-  const [sel,      setSel]      = useState(null);
+  const [tab, setTab]     = useState("dashboard");
+  const [sel, setSel]     = useState(null);
   const [drvModal, setDrvModal] = useState(null);
-  const [fStatus,  setFStatus]  = useState("all");
-  const [fDate,    setFDate]    = useState("");
+  const [fStatus, setFStatus]   = useState("all");
+  const [fDate,   setFDate]     = useState("");
 
   const { deliveries, drivers, users } = state;
   const getUser   = id => users.find(u => u.id === id);
@@ -60,7 +60,7 @@ export default function AdminApp({ state, dispatch, user, onLogout }) {
         right={<LogoutBtn onLogout={onLogout} />}
       />
 
-      {/* ── DASHBOARD ── */}
+      {/* DASHBOARD */}
       {tab === "dashboard" && (
         <div style={{ padding: 16, paddingBottom: 80 }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
@@ -114,13 +114,12 @@ export default function AdminApp({ state, dispatch, user, onLogout }) {
         </div>
       )}
 
-      {/* ── DELIVERIES ── */}
+      {/* DELIVERIES LIST */}
       {tab === "deliveries" && (
         <div style={{ padding: 16, paddingBottom: 80 }}>
           <div style={{ display: "flex", gap: 8, marginBottom: 12, overflowX: "auto", paddingBottom: 4 }}>
             {["all", ...Object.keys(STATUS_CONFIG)].map(s => (
-              <button key={s} onClick={() => setFStatus(s)}
-                style={{ padding: "7px 14px", border: "none", borderRadius: 20, cursor: "pointer", whiteSpace: "nowrap", background: fStatus === s ? "#1a1a2e" : "#f0f0f0", color: fStatus === s ? "#fff" : "#444", fontSize: 12, fontWeight: 600, fontFamily: "inherit" }}>
+              <button key={s} onClick={() => setFStatus(s)} style={{ padding: "7px 14px", border: "none", borderRadius: 20, cursor: "pointer", whiteSpace: "nowrap", background: fStatus === s ? "#1a1a2e" : "#f0f0f0", color: fStatus === s ? "#fff" : "#444", fontSize: 12, fontWeight: 600, fontFamily: "inherit" }}>
                 {s === "all" ? "Бүгд" : STATUS_CONFIG[s].label}
               </button>
             ))}
@@ -146,7 +145,7 @@ export default function AdminApp({ state, dispatch, user, onLogout }) {
         </div>
       )}
 
-      {/* ── CREATE ORDER (admin) ── */}
+      {/* CREATE ORDER */}
       {tab === "create" && (
         <DeliveryForm
           defaultSender={{ name: "", phone: "" }}
@@ -157,12 +156,10 @@ export default function AdminApp({ state, dispatch, user, onLogout }) {
         />
       )}
 
-      {/* ── DRIVERS ── */}
+      {/* DRIVERS LIST */}
       {tab === "drivers" && (
         <div style={{ padding: 16, paddingBottom: 80 }}>
-          <PrimaryBtn full onClick={() => setDrvModal({})} style={{ marginBottom: 16 }}>
-            + Жолооч нэмэх
-          </PrimaryBtn>
+          <PrimaryBtn full onClick={() => setDrvModal({})} style={{ marginBottom: 16 }}>+ Жолооч нэмэх</PrimaryBtn>
           {drivers.map(drv => {
             const u = getUser(drv.user_id);
             const actDel = deliveries.find(d => d.assigned_driver_id === drv.id && ["accepted","picked_up","on_the_way"].includes(d.status));
@@ -201,7 +198,7 @@ export default function AdminApp({ state, dispatch, user, onLogout }) {
         </div>
       )}
 
-      {/* ── CUSTOMERS ── */}
+      {/* CUSTOMERS LIST */}
       {tab === "customers" && (
         <div style={{ padding: 16, paddingBottom: 80 }}>
           <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10 }}>Бүртгэлтэй хэрэглэгчид</div>
@@ -241,7 +238,7 @@ export default function AdminApp({ state, dispatch, user, onLogout }) {
         </div>
       )}
 
-      {/* ── DELIVERY DETAIL ── */}
+      {/* DELIVERY DETAIL */}
       {tab === "detail" && sel && (() => {
         const d = deliveries.find(x => x.id === sel.id) || sel;
         const drv = d.assigned_driver_id ? getDriver(d.assigned_driver_id) : null;
@@ -307,19 +304,16 @@ function AddDriverModal({ onSave, onClose }) {
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
       <div style={{ background: "#fff", borderRadius: "20px 20px 0 0", padding: 24, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Жолооч нэмэх</div>
-        <Input label="Бүтэн нэр"           value={f.full_name}      onChange={v => set("full_name", v)} required />
-        <Input label="Утасны дугаар"       value={f.phone}          onChange={v => set("phone", v)} required />
-        <Input label="Имэйл"               value={f.email}          onChange={v => set("email", v)} type="email" required />
-        <Input label="Нууц үг"             value={f.password}       onChange={v => set("password", v)} type="password" required />
-        <Select label="Тээврийн хэрэгсэл"  value={f.vehicle_type}   onChange={v => set("vehicle_type", v)} options={VEHICLE_TYPES.map(v => ({ value: v, label: v }))} />
-        <Input label="Улсын дугаар"        value={f.vehicle_plate}  onChange={v => set("vehicle_plate", v)} required />
-        <Input label="Жолооны үнэмлэх №"   value={f.license_number} onChange={v => set("license_number", v)} required />
+        <Input label="Бүтэн нэр"          value={f.full_name}       onChange={v => set("full_name", v)} required />
+        <Input label="Утасны дугаар"      value={f.phone}           onChange={v => set("phone", v)} required />
+        <Input label="Имэйл"              value={f.email}           onChange={v => set("email", v)} type="email" required />
+        <Input label="Нууц үг"            value={f.password}        onChange={v => set("password", v)} type="password" required />
+        <Select label="Тээврийн хэрэгсэл" value={f.vehicle_type}    onChange={v => set("vehicle_type", v)} options={VEHICLE_TYPES.map(v => ({ value: v, label: v }))} />
+        <Input label="Улсын дугаар"       value={f.vehicle_plate}   onChange={v => set("vehicle_plate", v)} required />
+        <Input label="Жолооны үнэмлэх №"  value={f.license_number}  onChange={v => set("license_number", v)} required />
         <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
           <Btn full onClick={onClose}>Болих</Btn>
-          <PrimaryBtn full onClick={() => {
-            if (!f.full_name || !f.phone || !f.email || !f.vehicle_plate || !f.license_number) return;
-            onSave(f);
-          }}>Нэмэх</PrimaryBtn>
+          <PrimaryBtn full onClick={() => { if (!f.full_name || !f.phone || !f.email || !f.vehicle_plate || !f.license_number) return; onSave(f); }}>Нэмэх</PrimaryBtn>
         </div>
       </div>
     </div>

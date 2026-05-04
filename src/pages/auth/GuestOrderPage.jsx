@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { TopBar } from "../../components/ui/TopBar";
 import { Input, Select } from "../../components/ui/FormFields";
-import { PrimaryBtn } from "../../components/ui/Buttons";
-import { PAYMENT_METHODS, ITEM_SIZES } from "../../constants";
-import { genTracking } from "../../utils/helpers";
+import { PrimaryBtn } from "../../components/ui/Button";
+import { ITEM_SIZES, PAYMENT_METHODS } from "../../constants";
+import { genTracking } from "../../store/helpers";
 
 export default function GuestOrderPage({ onSubmit, onBack }) {
   const [form, setForm] = useState({
@@ -17,25 +17,11 @@ export default function GuestOrderPage({ onSubmit, onBack }) {
 
   if (done) {
     return (
-      <div
-        style={{
-          minHeight: "100vh", background: "#f8f9fa", display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center",
-          fontFamily: "system-ui,sans-serif",
-        }}
-      >
+      <div style={{ minHeight: "100vh", background: "#f8f9fa", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center", fontFamily: "system-ui,sans-serif" }}>
         <div style={{ fontSize: 80 }}>✅</div>
         <div style={{ fontSize: 22, fontWeight: 800, color: "#16a34a", marginBottom: 8 }}>Захиалга амжилттай!</div>
         <div style={{ fontSize: 15, color: "#555", marginBottom: 8 }}>Таны дагалдах код:</div>
-        <div
-          style={{
-            fontSize: 30, fontWeight: 800, color: "#1a1a2e",
-            background: "#e0e7ff", padding: "14px 36px",
-            borderRadius: 16, marginBottom: 24, display: "inline-block",
-          }}
-        >
-          {done}
-        </div>
+        <div style={{ fontSize: 30, fontWeight: 800, color: "#1a1a2e", background: "#e0e7ff", padding: "14px 36px", borderRadius: 16, marginBottom: 24, display: "inline-block" }}>{done}</div>
         <div style={{ fontSize: 14, color: "#666", marginBottom: 28, maxWidth: 300 }}>
           Энэ кодоор захиалгаа хянах боломжтой. Жолооч хүлээн авмагц мэдэгдэл очно.
         </div>
@@ -65,24 +51,21 @@ export default function GuestOrderPage({ onSubmit, onBack }) {
         <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12, marginTop: 8 }}>Барааны мэдээлэл</div>
         <Input label="Барааны тайлбар" value={form.item_description} onChange={v => set("item_description", v)} required />
         <Select label="Хэмжээ" value={form.item_size} onChange={v => set("item_size", v)} options={ITEM_SIZES.map(s => ({ value: s, label: s }))} />
-        <Input label="Жин (кг)"  value={form.item_weight} onChange={v => set("item_weight", v)} />
-        <Input label="Тэмдэглэл" value={form.note}         onChange={v => set("note", v)} placeholder="Онцгой заавар..." />
+        <Input label="Жин (кг)"  value={form.item_weight}           onChange={v => set("item_weight", v)} />
+        <Input label="Тэмдэглэл" value={form.note}                   onChange={v => set("note", v)} placeholder="Онцгой заавар..." />
         <Select label="Төлбөрийн хэлбэр" value={form.payment_method} onChange={v => set("payment_method", v)} options={PAYMENT_METHODS.map(p => ({ value: p, label: p }))} />
         <Input label="Авах цаг" value={form.preferred_pickup_time} onChange={v => set("preferred_pickup_time", v)} type="time" />
 
-        <PrimaryBtn
-          full
-          style={{ marginTop: 12 }}
-          onClick={() => {
-            if (!form.sender_name || !form.sender_phone || !form.pickup_address ||
-                !form.receiver_name || !form.receiver_phone || !form.dropoff_address || !form.item_description) {
-              alert("Шаардлагатай талбаруудыг бөглөнө үү (*)"); return;
-            }
-            const tracking = genTracking();
-            onSubmit(form, tracking);
-            setDone(tracking);
-          }}
-        >
+        <PrimaryBtn full style={{ marginTop: 12 }} onClick={() => {
+          if (!form.sender_name || !form.sender_phone || !form.pickup_address ||
+              !form.receiver_name || !form.receiver_phone || !form.dropoff_address || !form.item_description) {
+            alert("Шаардлагатай талбаруудыг бөглөнө үү (*)");
+            return;
+          }
+          const tracking = genTracking();
+          onSubmit(form, tracking);
+          setDone(tracking);
+        }}>
           📦 Захиалга илгээх
         </PrimaryBtn>
       </div>

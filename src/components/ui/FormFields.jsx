@@ -12,15 +12,10 @@ export function Input({ label, value, onChange, type = "text", placeholder, requ
         type={type}
         placeholder={placeholder}
         style={{
-          width: "100%",
-          boxSizing: "border-box",
-          padding: "11px 14px",
-          border: "1.5px solid #e0e0e0",
-          borderRadius: 10,
-          fontSize: 15,
-          fontFamily: "inherit",
-          outline: "none",
-          background: "#fafafa",
+          width: "100%", boxSizing: "border-box",
+          padding: "11px 14px", border: "1.5px solid #e0e0e0",
+          borderRadius: 10, fontSize: 15, fontFamily: "inherit",
+          outline: "none", background: "#fafafa",
         }}
       />
     </div>
@@ -37,18 +32,12 @@ export function Select({ label, value, onChange, options }) {
         value={value}
         onChange={e => onChange(e.target.value)}
         style={{
-          width: "100%",
-          padding: "11px 14px",
-          border: "1.5px solid #e0e0e0",
-          borderRadius: 10,
-          fontSize: 15,
-          fontFamily: "inherit",
-          background: "#fafafa",
+          width: "100%", padding: "11px 14px",
+          border: "1.5px solid #e0e0e0", borderRadius: 10,
+          fontSize: 15, fontFamily: "inherit", background: "#fafafa",
         }}
       >
-        {options.map(o => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
     </div>
   );

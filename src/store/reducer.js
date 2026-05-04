@@ -1,7 +1,6 @@
-const genId       = () => Math.random().toString(36).substr(2, 9);
-const now         = () => new Date().toISOString();
+import { genId, genTracking, now } from "./helpers";
 
-export default function reducer(state, action) {
+export function reducer(state, action) {
   switch (action.type) {
 
     case "LOGIN":
@@ -12,13 +11,12 @@ export default function reducer(state, action) {
 
     case "REGISTER": {
       const u = {
-        id: genId(),
-        role: "customer",
+        id: genId(), role: "customer",
         full_name: action.data.full_name,
-        phone: action.data.phone,
-        email: action.data.email,
-        password: action.data.password,
-        status: "active",
+        phone:     action.data.phone,
+        email:     action.data.email,
+        password:  action.data.password,
+        status:    "active",
       };
       return { ...state, users: [...state.users, u], currentUser: u };
     }
@@ -45,22 +43,19 @@ export default function reducer(state, action) {
       const uid = genId();
       const did = genId();
       const u = {
-        id: uid,
-        role: "driver",
+        id: uid, role: "driver",
         full_name: action.data.full_name,
-        phone: action.data.phone,
-        email: action.data.email,
-        password: action.data.password,
-        status: "active",
+        phone:     action.data.phone,
+        email:     action.data.email,
+        password:  action.data.password,
+        status:    "active",
       };
       const drv = {
-        id: did,
-        user_id: uid,
-        vehicle_type: action.data.vehicle_type,
-        vehicle_plate: action.data.vehicle_plate,
+        id: did, user_id: uid,
+        vehicle_type:   action.data.vehicle_type,
+        vehicle_plate:  action.data.vehicle_plate,
         license_number: action.data.license_number,
-        is_online: false,
-        is_available: false,
+        is_online: false, is_available: false,
       };
       return { ...state, users: [...state.users, u], drivers: [...state.drivers, drv] };
     }
@@ -68,23 +63,17 @@ export default function reducer(state, action) {
     case "CREATE_DELIVERY": {
       const d = {
         id: genId(),
-        tracking_code: action.tracking,
-        customer_id: action.customerId || null,
+        tracking_code:  action.tracking,
+        customer_id:    action.customerId || null,
         ...action.form,
-        pickup_lat:  47.9 + Math.random() * 0.05,
+        pickup_lat:  47.9  + Math.random() * 0.05,
         pickup_lng:  106.85 + Math.random() * 0.1,
-        dropoff_lat: 47.9 + Math.random() * 0.05,
+        dropoff_lat: 47.9  + Math.random() * 0.05,
         dropoff_lng: 106.85 + Math.random() * 0.1,
-        status: "pending",
-        assigned_driver_id: null,
-        created_at: now(),
-        accepted_at: null,
-        picked_up_at: null,
-        delivered_at: null,
-        cancelled_at: null,
-        status_logs: [
-          { old_status: null, new_status: "pending", note: "Захиалга үүссэн", created_at: now() },
-        ],
+        status: "pending", assigned_driver_id: null,
+        created_at:   now(), accepted_at: null,
+        picked_up_at: null,  delivered_at: null, cancelled_at: null,
+        status_logs: [{ old_status: null, new_status: "pending", note: "Захиалга үүссэн", created_at: now() }],
       };
       return { ...state, deliveries: [...state.deliveries, d] };
     }
@@ -95,14 +84,13 @@ export default function reducer(state, action) {
         deliveries: state.deliveries.map(d =>
           d.id === action.deliveryId
             ? {
-                ...d,
-                status: "accepted",
+                ...d, status: "accepted",
                 assigned_driver_id: action.driverId,
                 accepted_at: now(),
-                status_logs: [
-                  ...(d.status_logs || []),
-                  { old_status: "pending", new_status: "accepted", note: "Жолооч хүлээн авлаа", driver_id: action.driverId, created_at: now() },
-                ],
+                status_logs: [...(d.status_logs || []), {
+                  old_status: "pending", new_status: "accepted",
+                  note: "Жолооч хүлээн авлаа", driver_id: action.driverId, created_at: now(),
+                }],
               }
             : d
         ),
@@ -116,10 +104,10 @@ export default function reducer(state, action) {
       const tsKey = { picked_up: "picked_up_at", delivered: "delivered_at" }[action.newStatus];
       const upd = {
         status: action.newStatus,
-        status_logs: [
-          ...(d.status_logs || []),
-          { old_status: d.status, new_status: action.newStatus, driver_id: action.driverId, created_at: now() },
-        ],
+        status_logs: [...(d.status_logs || []), {
+          old_status: d.status, new_status: action.newStatus,
+          driver_id: action.driverId, created_at: now(),
+        }],
       };
       if (tsKey) upd[tsKey] = now();
       return {
@@ -137,14 +125,12 @@ export default function reducer(state, action) {
         deliveries: state.deliveries.map(x =>
           x.id === action.deliveryId
             ? {
-                ...x,
-                status: "cancelled",
-                cancelled_at: now(),
+                ...x, status: "cancelled", cancelled_at: now(),
                 assigned_driver_id: null,
-                status_logs: [
-                  ...(x.status_logs || []),
-                  { old_status: x.status, new_status: "cancelled", note: action.note, driver_id: action.driverId, created_at: now() },
-                ],
+                status_logs: [...(x.status_logs || []), {
+                  old_status: x.status, new_status: "cancelled",
+                  note: action.note, driver_id: action.driverId, created_at: now(),
+                }],
               }
             : x
         ),
